@@ -1,3 +1,5 @@
+from typing import Any, Callable, Optional, Tuple
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import logging
@@ -7,15 +9,26 @@ import os
 import pandas as pd
 import requests
 import time
-from typing import Any, Callable, Optional, Tuple
+try:
+    # Load environment variables from .env if present
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv()
+except Exception:
+    pass
 
 try:
+    import yfinance as yf
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    YFINANCE_AVAILABLE = False
+
     # urllib3 Retry is useful for robust HTTP retries on 429/5xx
-    from requests.adapters import HTTPAdapter
-    from urllib3.util.retry import Retry
-except Exception:
-    HTTPAdapter = None
-    Retry = None
+    try:
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+    except Exception:
+        HTTPAdapter = None
+        Retry = None
 
 # Configure logging to output to both console and file
 logging.basicConfig(
@@ -762,6 +775,216 @@ def get_chart_data(symbol):
         logger.error(f"Error fetching chart data for {symbol}: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/gemini', methods=['POST'])
+def gemini_proxy():
+    """Proxy endpoint for Gemini API calls using the API key from environment variables."""
+    try:
+        # Get the API key from environment variables
+        gemini_api_key = os.environ.get('GEMINI_API_KEY')
+        if not gemini_api_key:
+            return jsonify({'error': 'GEMINI_API_KEY not found in environment variables'}), 500
+
+        # Get the prompt from the request
+        data = request.get_json()
+        if not data or 'prompt' not in data:
+            return jsonify({'error': 'Missing prompt in request body'}), 400
+
+        prompt = data['prompt']
+
+        # Make the request to Gemini API
+        gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={gemini_api_key}"
+
+        gemini_payload = {
+            "contents": [{
+                "parts": [{
+                    "text": prompt
+                }]
+            }]
+        }
+
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.post(gemini_url, json=gemini_payload, headers=headers, timeout=30)
+
+        if response.status_code != 200:
+            return jsonify({'error': f'Gemini API error: {response.status_code} - {response.text}'}), response.status_code
+
+        gemini_response = response.json()
+
+        # Extract the response text from Gemini's response format
+        if 'candidates' in gemini_response and len(gemini_response['candidates']) > 0:
+            candidate = gemini_response['candidates'][0]
+            if 'content' in candidate and 'parts' in candidate['content'] and len(candidate['content']['parts']) > 0:
+                response_text = candidate['content']['parts'][0]['text']
+                return jsonify({'candidates': [{'content': {'parts': [{'text': response_text}]}}]})
+
+        return jsonify({'error': 'Unexpected response format from Gemini API'}), 500
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Request error: {str(e)}'}), 500
+    except Exception as e:
+        logger.error(f"Gemini proxy error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stock-analysis', methods=['POST'])
+def stock_analysis():
+    """Analyze stocks using yfinance data and Gemini AI recommendations."""
+    try:
+        # Get the API key from environment variables
+        gemini_api_key = os.environ.get('GEMINI_API_KEY')
+        if not gemini_api_key:
+            return jsonify({'error': 'GEMINI_API_KEY not found in environment variables'}), 500
+
+        # Get the stock symbols from the request
+        data = request.get_json()
+        if not data or 'symbols' not in data:
+            return jsonify({'error': 'Missing symbols in request body'}), 400
+
+        symbols = data['symbols']
+        if not isinstance(symbols, list):
+            symbols = [symbols]
+
+        analysis_results = []
+
+        for symbol in symbols:
+            try:
+                # Get stock data using yfinance
+                if not YFINANCE_AVAILABLE:
+                    return jsonify({'error': 'yfinance library not available'}), 500
+
+                stock = yf.Ticker(symbol)
+
+                # Get current info
+                info = stock.info
+                if not info:
+                    analysis_results.append({
+                        'symbol': symbol,
+                        'error': 'Could not fetch stock data'
+                    })
+                    continue
+
+                # Get recent price history
+                hist = stock.history(period="3mo")
+
+                # Extract key metrics
+                current_price = info.get('currentPrice', info.get('regularMarketPrice', 0))
+                pe_ratio = info.get('trailingPE', info.get('forwardPE', None))
+                market_cap = info.get('marketCap', 0)
+                dividend_yield = info.get('dividendYield', 0)
+                beta = info.get('beta', 1.0)
+                fifty_two_week_high = info.get('fiftyTwoWeekHigh', 0)
+                fifty_two_week_low = info.get('fiftyTwoWeekLow', 0)
+
+                # Calculate some metrics
+                price_to_52w_high = (current_price / fifty_two_week_high * 100) if fifty_two_week_high > 0 else 0
+                volatility = hist['Close'].pct_change().std() * (252 ** 0.5) if len(hist) > 1 else 0  # Annualized volatility
+
+                # Prepare data for Gemini
+                stock_data = {
+                    'symbol': symbol,
+                    'name': info.get('longName', info.get('shortName', symbol)),
+                    'current_price': current_price,
+                    'pe_ratio': pe_ratio,
+                    'market_cap': market_cap,
+                    'dividend_yield': dividend_yield,
+                    'beta': beta,
+                    'fifty_two_week_high': fifty_two_week_high,
+                    'fifty_two_week_low': fifty_two_week_low,
+                    'price_to_52w_high': round(price_to_52w_high, 2),
+                    'volatility': round(volatility, 4),
+                    'sector': info.get('sector', 'Unknown'),
+                    'industry': info.get('industry', 'Unknown'),
+                    'recommendation': info.get('recommendationKey', 'none')
+                }
+
+                # Create prompt for Gemini
+                prompt = f"""
+You are a professional stock analyst. Analyze this stock and provide a buy/sell/hold recommendation.
+
+Stock Data:
+- Symbol: {stock_data['symbol']}
+- Name: {stock_data['name']}
+- Current Price: ${current_price:.2f}
+- P/E Ratio: {pe_ratio if pe_ratio else 'N/A'}
+- Market Cap: ${market_cap:,}
+- Dividend Yield: {dividend_yield:.2%} if dividend_yield else 'N/A'
+- Beta: {beta:.2f}
+- 52-Week High: ${fifty_two_week_high:.2f}
+- 52-Week Low: ${fifty_two_week_low:.2f}
+- Price vs 52W High: {price_to_52w_high:.1f}%
+- Annualized Volatility: {volatility:.2%}
+- Sector: {stock_data['sector']}
+- Industry: {stock_data['industry']}
+- Analyst Recommendation: {stock_data['recommendation'].upper()}
+
+Please provide:
+1. A clear BUY/SELL/HOLD recommendation
+2. 3-4 key reasons for your recommendation
+3. Risk level (Low/Medium/High)
+4. Price target range (if applicable)
+5. Investment time horizon
+
+Format your response as a professional analyst report.
+"""
+
+                # Call Gemini API
+                gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={gemini_api_key}"
+
+                gemini_payload = {
+                    "contents": [{
+                        "parts": [{
+                            "text": prompt
+                        }]
+                    }]
+                }
+
+                headers = {
+                    'Content-Type': 'application/json'
+                }
+
+                response = requests.post(gemini_url, json=gemini_payload, headers=headers, timeout=30)
+
+                if response.status_code != 200:
+                    analysis_results.append({
+                        'symbol': symbol,
+                        'error': f'Gemini API error: {response.status_code}'
+                    })
+                    continue
+
+                gemini_response = response.json()
+
+                if 'candidates' in gemini_response and len(gemini_response['candidates']) > 0:
+                    analysis_text = gemini_response['candidates'][0]['content']['parts'][0]['text']
+
+                    analysis_results.append({
+                        'symbol': symbol,
+                        'stock_data': stock_data,
+                        'analysis': analysis_text
+                    })
+                else:
+                    analysis_results.append({
+                        'symbol': symbol,
+                        'error': 'Invalid response format from Gemini API'
+                    })
+
+            except Exception as e:
+                logger.error(f"Error analyzing stock {symbol}: {str(e)}")
+                analysis_results.append({
+                    'symbol': symbol,
+                    'error': str(e)
+                })
+
+        return jsonify({
+            'analysis': analysis_results,
+            'timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Stock analysis error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({
@@ -778,5 +1001,6 @@ def internal_server_error(error):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    logger.info(f"Starting Flask server on port {port}")
+    has_key = bool(os.environ.get('GEMINI_API_KEY'))
+    logger.info(f"Starting Flask server on port {port} | GEMINI_API_KEY loaded: {has_key}")
     app.run(host='0.0.0.0', port=port, debug=True)

@@ -1,0 +1,29 @@
+{
+  "name": "stockwise-server",
+  "version": "1.0.0",
+  "description": "Backend server for StockWise application with Gemini API integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "stock",
+    "finance",
+    "gemini",
+    "ai",
+    "express"
+  ],
+  "author": "StockWise Team",
+  "license": "MIT"
+}

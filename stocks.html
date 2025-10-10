@@ -1314,5 +1314,470 @@
     }
   })();
   </script>
+
+  <!-- Chatbot JavaScript -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+  (function() {
+    // Chatbot DOM elements
+    const chatbotToggle = document.getElementById('chatbot-toggle');
+    const chatbotWindow = document.getElementById('chatbot-window');
+    const chatbotMessages = document.getElementById('chatbot-messages');
+    const chatbotInput = document.getElementById('chatbot-input');
+    const chatbotSend = document.getElementById('chatbot-send');
+    const chatbotIcon = document.getElementById('chatbot-icon');
+    const chatbotCloseIcon = document.getElementById('chatbot-close-icon');
+
+    let isChatbotOpen = false;
+
+    // Toggle chatbot window
+    function toggleChatbot() {
+      isChatbotOpen = !isChatbotOpen;
+      chatbotWindow.classList.toggle('hidden', !isChatbotOpen);
+
+      if (isChatbotOpen) {
+        chatbotIcon.classList.add('hidden');
+        chatbotCloseIcon.classList.remove('hidden');
+        chatbotInput.focus();
+      } else {
+        chatbotIcon.classList.remove('hidden');
+        chatbotCloseIcon.classList.add('hidden');
+      }
+    }
+
+    // Add message to chat
+    function addMessage(text, isUser = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+
+      const messageContent = document.createElement('div');
+      messageContent.className = `max-w-xs px-4 py-2 rounded-lg text-sm ${
+        isUser
+          ? 'bg-gradient-to-r from-[#8b45ff] to-[#00d4ff] text-white'
+          : 'bg-[#2e4328] text-gray-200 border border-[#8b45ff]/30'
+      }`;
+
+      messageContent.textContent = text;
+      messageDiv.appendChild(messageContent);
+
+      chatbotMessages.appendChild(messageDiv);
+      chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+
+    // Get chatbot response using Gemini API
+    async function getChatbotResponse(message) {
+      try {
+        const response = await generateGeminiResponse(message);
+        return response;
+      } catch (error) {
+        console.error('Error getting chatbot response:', error);
+        return "I apologize, but I'm having trouble responding right now. Please try again later.";
+      }
+    }
+
+    // Generate response using Gemini API (via proxy) or stock analysis
+    async function generateGeminiResponse(message) {
+      try {
+        console.log('🤖 Attempting to generate response...');
+
+        // Check if user is asking for stock analysis or recommendations
+        const analysisKeywords = ['analyze', 'analysis', 'recommend', 'recommendation', 'buy', 'sell', 'hold', 'invest', 'portfolio', 'which stock'];
+        const lowerMessage = message.toLowerCase();
+
+        const isAnalysisRequest = analysisKeywords.some(keyword => lowerMessage.includes(keyword));
+
+        if (isAnalysisRequest) {
+          // Try to extract stock symbols from the message
+          const symbolMatches = message.match(/\$?([A-Z]{2,5})/g);
+          let symbols = [];
+
+          if (symbolMatches) {
+            symbols = symbolMatches.map(match => match.replace('$', '')).filter(symbol =>
+              symbol.length >= 2 && symbol.length <= 5 && /^[A-Z]+$/.test(symbol)
+            );
+          }
+
+          // If no symbols found in message, use current stock or ask for symbols
+          if (symbols.length === 0) {
+            const currentStock = window.currentSymbol;
+            if (currentStock) {
+              symbols = [currentStock];
+            } else {
+              return "I'd be happy to analyze stocks for you! Please specify which stock symbols you'd like me to analyze, or select a stock first using the search bar above.";
+            }
+          }
+
+          console.log('📊 Stock analysis request for symbols:', symbols);
+
+          // Get analysis from backend
+          const analysisResults = await analyzeStocks(symbols);
+
+          if (analysisResults && analysisResults.length > 0) {
+            let response = "Here's my professional analysis of the requested stocks:\n\n";
+
+            analysisResults.forEach(result => {
+              if (result.error) {
+                response += `❌ **${result.symbol}**: ${result.error}\n\n`;
+              } else {
+                response += `📈 **${result.symbol}** (${result.stock_data.name}):\n`;
+                response += `💰 Current Price: $${result.stock_data.current_price.toFixed(2)}\n`;
+                response += `📊 P/E Ratio: ${result.stock_data.pe_ratio || 'N/A'}\n`;
+                response += `🏢 Sector: ${result.stock_data.sector}\n\n`;
+                response += `**Analysis:** ${result.analysis}\n\n`;
+                response += `---\n\n`;
+              }
+            });
+
+            return response;
+          } else {
+            return "I wasn't able to complete the stock analysis. Please make sure the server is running and try again.";
+          }
+        }
+
+        // For general questions, use the regular Gemini API
+        // Prepare the prompt for Gemini
+        const currentStock = window.currentSymbol || '';
+        const prompt = createGeminiPrompt(message, currentStock);
+
+        console.log('📝 General prompt:', prompt.substring(0, 100) + '...');
+
+        // Call our backend proxy instead of Gemini directly
+        const response = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt })
+        });
+
+        console.log('🔄 Response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Server error:', errorText);
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Server response received');
+
+        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+          const responseText = data.candidates[0].content.parts[0].text;
+          console.log('🤖 Gemini response:', responseText.substring(0, 100) + '...');
+          return responseText;
+        } else {
+          console.error('❌ Invalid response format:', data);
+          throw new Error('Invalid response format from server');
+        }
+
+      } catch (error) {
+        console.error('❌ Error calling APIs:', error.message);
+
+        // Fallback to rule-based responses if API fails
+        return await generateFallbackResponse(message);
+      }
+    }
+
+    // Create a comprehensive prompt for Gemini
+    function createGeminiPrompt(message, currentStock) {
+      let prompt = `You are StockWise Assistant, a helpful AI assistant for a stock market analysis application.
+
+Current Context:
+- Selected Stock: ${currentStock || 'None'}
+- User's Question: ${message}
+
+Please provide a helpful, accurate, and informative response about stocks, investing, or financial markets. Follow these guidelines:
+
+1. If the user asks about a specific stock and one is selected, provide relevant information about that stock
+2. Always be helpful and educational about investing concepts
+3. If giving financial advice, always include disclaimers that you're not a financial advisor
+4. Keep responses concise but informative (aim for 2-4 sentences)
+5. Use a friendly, professional tone
+6. If you don't know something specific, admit it and suggest alternatives
+
+Response:`;
+
+      return prompt;
+    }
+
+    // Fallback response system (original rule-based responses)
+    async function generateFallbackResponse(message) {
+      const lowerMessage = message.toLowerCase();
+      const currentStock = window.currentSymbol || '';
+
+      // Stock-specific responses
+      if (lowerMessage.includes('price') && currentStock) {
+        try {
+          const stockData = await fetchStockData(currentStock);
+          if (stockData && stockData.price) {
+            const price = formatCurrency(stockData.price, stockData.currency || 'USD');
+            const open = formatCurrency(stockData.open || 0, stockData.currency || 'USD');
+            const prevClose = formatCurrency(stockData.previousClose || 0, stockData.currency || 'USD');
+            const dayLow = formatCurrency(stockData.low || 0, stockData.currency || 'USD');
+            const dayHigh = formatCurrency(stockData.high || 0, stockData.currency || 'USD');
+            const exchange = stockData.exchange || 'Unknown Exchange';
+
+            return `**${stockData.symbol} (${stockData.name})**\n\n💰 **Current Price:** ${price}\n📈 **Open:** ${open}\n📉 **Previous Close:** ${prevClose}\n📊 **Day's Range:** ${dayLow} - ${dayHigh}\n🏢 **Exchange:** ${exchange}`;
+          }
+        } catch (error) {
+          console.error('Error fetching stock data for fallback:', error);
+        }
+      }
+
+      // Handle requests for specific stock prices (e.g., "AAPL price", "what is TSLA price")
+      const stockPriceMatch = lowerMessage.match(/(?:what is|what's|current price of|price of)\s+([A-Z]{2,5})/);
+      if (stockPriceMatch) {
+        const symbol = stockPriceMatch[1].toUpperCase();
+        try {
+          const stockData = await fetchStockData(symbol);
+          if (stockData && stockData.price) {
+            const price = formatCurrency(stockData.price, stockData.currency || 'USD');
+            const open = formatCurrency(stockData.open || 0, stockData.currency || 'USD');
+            const prevClose = formatCurrency(stockData.previousClose || 0, stockData.currency || 'USD');
+            const dayLow = formatCurrency(stockData.low || 0, stockData.currency || 'USD');
+            const dayHigh = formatCurrency(stockData.high || 0, stockData.currency || 'USD');
+            const exchange = stockData.exchange || 'Unknown Exchange';
+
+            return `**${stockData.symbol} (${stockData.name})**\n\n💰 **Current Price:** ${price}\n📈 **Open:** ${open}\n📉 **Previous Close:** ${prevClose}\n📊 **Day's Range:** ${dayLow} - ${dayHigh}\n🏢 **Exchange:** ${exchange}`;
+          } else {
+            return `Sorry, I couldn't find current price information for ${symbol}. Please make sure the stock symbol is correct and try again.`;
+          }
+        } catch (error) {
+          console.error('Error fetching stock data:', error);
+          return `I encountered an error while fetching the price for ${symbol}. Please try again later.`;
+        }
+      }
+
+      // General stock market responses
+      if (lowerMessage.includes('how are you') || lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+        return "Hello! I'm doing great, thank you for asking. I'm StockWise Assistant, here to help you with stock market questions, analysis, and trading insights. What would you like to know?";
+      }
+
+      if (lowerMessage.includes('what is') && lowerMessage.includes('stock')) {
+        return "A stock represents ownership in a company. When you buy shares of stock, you become a partial owner of that company and can benefit from its growth and profits.";
+      }
+
+      if (lowerMessage.includes('how to invest') || lowerMessage.includes('getting started')) {
+        return "To start investing in stocks: 1) Open a brokerage account, 2) Research companies you're interested in, 3) Start with index funds for beginners, 4) Invest regularly (dollar-cost averaging), 5) Diversify your portfolio, 6) Keep a long-term perspective.";
+      }
+
+      if (lowerMessage.includes('what is pe') || lowerMessage.includes('price to earnings')) {
+        return "The Price-to-Earnings (P/E) ratio compares a company's stock price to its earnings per share. A lower P/E might indicate a stock is undervalued, but context matters. Generally, a P/E below 15 is considered low, 15-25 moderate, and above 25 high.";
+      }
+
+      if (lowerMessage.includes('dividend')) {
+        return "Dividends are payments companies make to shareholders from their profits. Look for companies with consistent dividend histories and sustainable payout ratios (typically under 80%).";
+      }
+
+      if (lowerMessage.includes('market cap') || lowerMessage.includes('market capitalization')) {
+        return "Market capitalization (market cap) is the total value of a company's outstanding shares. It's calculated as: Market Cap = Stock Price × Number of Outstanding Shares. Categories: Small-cap (<$2B), Mid-cap ($2B-$10B), Large-cap ($10B+).";
+      }
+
+      if (lowerMessage.includes('volatility') || lowerMessage.includes('risk')) {
+        return "Volatility measures how much a stock's price fluctuates. Higher volatility means higher risk but potentially higher returns. Beta measures a stock's volatility compared to the market (beta = 1 means same as market).";
+      }
+
+      if (lowerMessage.includes('analysis') || lowerMessage.includes('analyze')) {
+        if (currentStock) {
+          return `I can help you analyze ${currentStock}! Ask me specific questions like: "What's the current price?", "How has it performed recently?", or "What do analysts think about this stock?"`;
+        } else {
+          return "I can help you analyze stocks! First, search for and select a stock using the search bar above, then ask me questions about it.";
+        }
+      }
+
+      if (lowerMessage.includes('strategy') || lowerMessage.includes('trading')) {
+        return "Popular trading strategies include: 1) Buy and Hold (long-term investing), 2) Value Investing (finding undervalued stocks), 3) Growth Investing (investing in growing companies), 4) Dollar-Cost Averaging (investing fixed amounts regularly).";
+      }
+
+      // Default responses
+      const responses = [
+        "That's an interesting question about the stock market! While I can provide general guidance, for specific investment advice, I recommend consulting with a licensed financial advisor.",
+        "I'd be happy to help you understand more about stocks and investing. Could you be more specific about what you'd like to know?",
+        "Great question! The stock market can be complex, but I'm here to break it down for you. What specific aspect would you like me to explain?",
+        "I can help you with general stock market information and concepts. For personalized investment advice, please consult with a qualified financial professional."
+      ];
+
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Analyze stocks using yfinance data and Gemini AI
+    async function analyzeStocks(symbols) {
+      try {
+        console.log('🔍 Analyzing stocks:', symbols);
+
+        const response = await fetch('/api/stock-analysis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ symbols: symbols })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Stock analysis error:', errorText);
+          throw new Error(`Analysis failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Stock analysis received');
+
+        return data.analysis;
+      } catch (error) {
+        console.error('❌ Error in stock analysis:', error.message);
+        throw error;
+      }
+    }
+
+    // Send message
+    async function sendMessage() {
+      const message = chatbotInput.value.trim();
+      if (!message) return;
+
+      console.log('💬 User message:', message);
+
+      // Clear input
+      chatbotInput.value = '';
+
+      // Add user message to chat
+      addMessage(message, true);
+
+      // Show typing indicator
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'flex justify-start';
+      typingDiv.innerHTML = '<div class="bg-[#2e4328] text-gray-400 px-4 py-2 rounded-lg text-sm border border-[#8b45ff]/30 max-w-xs">StockWise Assistant is typing...</div>';
+      chatbotMessages.appendChild(typingDiv);
+      chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+
+      try {
+        // Get and display response
+        const response = await getChatbotResponse(message);
+        console.log('✅ Got response:', response.substring(0, 50) + '...');
+
+        // Remove typing indicator
+        chatbotMessages.removeChild(typingDiv);
+
+        // Add bot response
+        addMessage(response, false);
+
+      } catch (error) {
+        console.error('❌ Error in sendMessage:', error);
+
+        // Remove typing indicator
+        if (chatbotMessages.contains(typingDiv)) {
+          chatbotMessages.removeChild(typingDiv);
+        }
+
+        // Show error message
+        addMessage("Sorry, I encountered an error. Please make sure the server is running and try again.", false);
+      }
+    }
+
+    // Event listeners
+    if (chatbotToggle) {
+      chatbotToggle.addEventListener('click', toggleChatbot);
+    }
+
+    if (chatbotSend) {
+      chatbotSend.addEventListener('click', sendMessage);
+    }
+
+    if (chatbotInput) {
+      chatbotInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
+
+      // Allow escape key to close chatbot
+      chatbotInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isChatbotOpen) {
+          toggleChatbot();
+        }
+      });
+    }
+
+    // Close chatbot when clicking outside
+    document.addEventListener('click', function(e) {
+      if (isChatbotOpen && !chatbotWindow.contains(e.target) && !chatbotToggle.contains(e.target)) {
+        toggleChatbot();
+      }
+    });
+
+    // Quick responses for common questions
+    window.askChatbot = function(question) {
+      if (typeof question === 'string') {
+        chatbotInput.value = question;
+        sendMessage();
+        if (!isChatbotOpen) {
+          toggleChatbot();
+        }
+      }
+    };
+  })();
+  });
+  </script>
+
+
+  <!-- Chatbot UI -->
+  <div id="chatbot-container" class="fixed bottom-4 right-4 z-50">
+    <!-- Chatbot Toggle Button -->
+    <button id="chatbot-toggle" class="w-14 h-14 bg-gradient-to-r from-[#8b45ff] to-[#00d4ff] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center mb-2">
+      <svg id="chatbot-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 256 256">
+        <path d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,0,0,128,24Zm32,128H96a8,8,0,0,1,0-16h64a8,8,0,0,1,0,16Zm0-32H96a8,8,0,0,1,0-16h64a8,8,0,0,1,0,16Z"></path>
+      </svg>
+      <svg id="chatbot-close-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 256 256" class="hidden">
+        <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69,194.34,50.34a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
+      </svg>
+    </button>
+
+    <!-- Chatbot Window -->
+    <div id="chatbot-window" class="w-80 h-96 bg-[#1a1a2e] border border-[#8b45ff] rounded-xl shadow-2xl hidden flex flex-col overflow-hidden">
+      <!-- Chatbot Header -->
+      <div class="bg-gradient-to-r from-[#8b45ff] to-[#00d4ff] p-4 text-white">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+              <path d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,0,0,128,24Zm32,128H96a8,8,0,0,1,0-16h64a8,8,0,0,1,0,16Zm0-32H96a8,8,0,0,1,0-16h64a8,8,0,0,1,0,16Z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-semibold text-sm">StockWise Assistant</h3>
+            <p class="text-xs opacity-90">Ask me about stocks & trading</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Messages -->
+      <div id="chatbot-messages" class="flex-1 p-4 space-y-3 overflow-y-auto bg-[#0f0f23]">
+        <div class="text-center text-gray-400 text-sm py-8">
+          <p>👋 Hi! I'm your StockWise assistant.</p>
+          <p class="mt-1">Ask me questions about stocks, market analysis, or trading strategies!</p>
+        </div>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="p-4 bg-[#1a1a2e] border-t border-[#8b45ff]/30">
+        <div class="flex gap-2">
+          <input
+            id="chatbot-input"
+            type="text"
+            placeholder="Ask me about stocks..."
+            class="flex-1 bg-[#2e4328] text-white text-sm rounded-lg px-3 py-2 border border-[#8b45ff]/50 focus:border-[#00d4ff] focus:outline-none transition-colors duration-300"
+            maxlength="200"
+          />
+          <button
+            id="chatbot-send"
+            class="w-10 h-10 bg-gradient-to-r from-[#8b45ff] to-[#00d4ff] rounded-lg flex items-center justify-center hover:from-[#7c3aed] hover:to-[#00b8e6] transition-all duration-300"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 256 256">
+              <path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H216a8,8,0,0,0,8-8V112.69A15.86,15.86,0,0,0,227.31,73.37ZM192,48l31.52,31.51L224,80,192,48ZM48,208V163.31l88-88,31.51,31.52L48,208Zm96-96,31.52,31.51L48,272H16V208Z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

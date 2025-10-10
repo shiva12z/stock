@@ -4814,3 +4814,101 @@
 2025-10-06 19:40:50,481 - werkzeug - INFO - 127.0.0.1 - - [06/Oct/2025 19:40:50] "GET /stock/AAPU HTTP/1.1" 200 -
 2025-10-06 19:40:52,573 - werkzeug - INFO - 127.0.0.1 - - [06/Oct/2025 19:40:52] "GET /stock/AAPL HTTP/1.1" 200 -
 2025-10-06 19:40:53,246 - werkzeug - INFO - 127.0.0.1 - - [06/Oct/2025 19:40:53] "GET /chart-data/AAPL HTTP/1.1" 200 -
+2025-10-06 20:45:26,781 - __main__ - INFO - Starting Flask server on port 5000
+2025-10-06 20:45:26,874 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.31.222:5000
+2025-10-06 20:45:26,875 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-06 20:45:26,894 - werkzeug - INFO -  * Restarting with watchdog (windowsapi)
+2025-10-06 20:45:28,417 - __main__ - INFO - Starting Flask server on port 5000
+2025-10-06 20:45:28,450 - werkzeug - WARNING -  * Debugger is active!
+2025-10-06 20:45:28,454 - werkzeug - INFO -  * Debugger PIN: 239-908-378
+2025-10-10 11:11:11,184 - __main__ - INFO - Starting Flask server on port 5000
+2025-10-10 11:11:11,282 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.31.222:5000
+2025-10-10 11:11:11,282 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-10 11:11:11,297 - werkzeug - INFO -  * Restarting with watchdog (windowsapi)
+2025-10-10 11:11:12,687 - __main__ - INFO - Starting Flask server on port 5000
+2025-10-10 11:11:12,718 - werkzeug - WARNING -  * Debugger is active!
+2025-10-10 11:11:12,750 - werkzeug - INFO -  * Debugger PIN: 239-908-378
+2025-10-10 11:14:09,068 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:14:09,071 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:14:09,071 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:14:09,508 - werkzeug - INFO -  * Restarting with watchdog (windowsapi)
+2025-10-10 11:14:13,042 - __main__ - INFO - Starting Flask server on port 5000
+2025-10-10 11:14:13,071 - werkzeug - WARNING -  * Debugger is active!
+2025-10-10 11:14:13,077 - werkzeug - INFO -  * Debugger PIN: 239-908-378
+2025-10-10 11:14:14,369 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:14:14,375 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:14:14,392 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:14:15,291 - werkzeug - INFO -  * Restarting with watchdog (windowsapi)
+2025-10-10 11:14:16,997 - __main__ - INFO - Starting Flask server on port 5000
+2025-10-10 11:14:17,029 - werkzeug - WARNING -  * Debugger is active!
+2025-10-10 11:14:17,038 - werkzeug - INFO -  * Debugger PIN: 239-908-378
+2025-10-10 11:17:52,881 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:17:52,894 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:17:52,895 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:17:53,222 - werkzeug - INFO -  * Restarting with watchdog (windowsapi)
+2025-10-10 11:17:55,247 - __main__ - INFO - Starting Flask server on port 5000 | GEMINI_API_KEY loaded: True
+2025-10-10 11:17:55,268 - werkzeug - WARNING -  * Debugger is active!
+2025-10-10 11:17:55,273 - werkzeug - INFO -  * Debugger PIN: 239-908-378
+2025-10-10 11:23:46,257 - __main__ - INFO - Starting Flask server on port 5000 | GEMINI_API_KEY loaded: True
+2025-10-10 11:23:46,332 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.31.222:5000
+2025-10-10 11:23:46,332 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-10 11:23:46,348 - werkzeug - INFO -  * Restarting with watchdog (windowsapi)
+2025-10-10 11:23:47,754 - __main__ - INFO - Starting Flask server on port 5000 | GEMINI_API_KEY loaded: True
+2025-10-10 11:23:47,773 - werkzeug - WARNING -  * Debugger is active!
+2025-10-10 11:23:47,788 - werkzeug - INFO -  * Debugger PIN: 239-908-378
+2025-10-10 11:24:59,521 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:24:59,534 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:24:59,537 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:24:59,820 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yfinance\\__init__.py', reloading
+2025-10-10 11:25:00,291 - werkzeug - INFO -  * Restarting with watchdog (windowsapi)
+2025-10-10 11:25:02,742 - __main__ - INFO - Starting Flask server on port 5000 | GEMINI_API_KEY loaded: True
+2025-10-10 11:25:02,768 - werkzeug - WARNING -  * Debugger is active!
+2025-10-10 11:25:02,772 - werkzeug - INFO -  * Debugger PIN: 239-908-378
+2025-10-10 11:25:06,857 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:25:06,864 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:25:06,877 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Admin\\Desktop\\stock\\app.py', reloading
+2025-10-10 11:25:08,022 - werkzeug - INFO -  * Restarting with watchdog (windowsapi)
+2025-10-10 11:30:07,580 - __main__ - INFO - Starting Flask server on port 5000 | GEMINI_API_KEY loaded: True
+2025-10-10 11:30:07,616 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.31.222:5000
+2025-10-10 11:30:07,617 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-10 11:30:07,628 - werkzeug - INFO -  * Restarting with watchdog (windowsapi)
+2025-10-10 11:30:09,307 - __main__ - INFO - Starting Flask server on port 5000 | GEMINI_API_KEY loaded: True
+2025-10-10 11:30:09,324 - werkzeug - WARNING -  * Debugger is active!
+2025-10-10 11:30:09,337 - werkzeug - INFO -  * Debugger PIN: 239-908-378
+2025-10-10 11:30:16,077 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:16] "GET /search?q=AA HTTP/1.1" 200 -
+2025-10-10 11:30:16,788 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:16] "GET /search?q=AAPL HTTP/1.1" 200 -
+2025-10-10 11:30:17,429 - __main__ - INFO - QuoteSummary response for AAOI: {}
+2025-10-10 11:30:17,429 - __main__ - INFO - QuoteSummary response for AAP: {}
+2025-10-10 11:30:17,429 - __main__ - INFO - QuoteSummary response for AAL: {}
+2025-10-10 11:30:17,429 - __main__ - INFO - QuoteSummary response for AAPL: {}
+2025-10-10 11:30:17,429 - __main__ - INFO - QuoteSummary response for AA: {}
+2025-10-10 11:30:17,980 - __main__ - INFO - QuoteSummary response for AAPL260116C00250000: {}
+2025-10-10 11:30:18,440 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:18] "GET /stock/AAOI HTTP/1.1" 200 -
+2025-10-10 11:30:18,542 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:18] "GET /stock/AAL HTTP/1.1" 200 -
+2025-10-10 11:30:18,550 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:18] "GET /stock/AAP HTTP/1.1" 200 -
+2025-10-10 11:30:18,552 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:18] "GET /stock/AAPL HTTP/1.1" 200 -
+2025-10-10 11:30:18,576 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:18] "GET /stock/AA HTTP/1.1" 200 -
+2025-10-10 11:30:18,836 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:18] "GET /stock/AAPL260116C00250000 HTTP/1.1" 200 -
+2025-10-10 11:30:19,106 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:19] "GET /stock/AAPL HTTP/1.1" 200 -
+2025-10-10 11:30:19,873 - __main__ - INFO - QuoteSummary response for AAPL.NE: {}
+2025-10-10 11:30:19,873 - __main__ - INFO - QuoteSummary response for AAPB: {}
+2025-10-10 11:30:19,873 - __main__ - INFO - QuoteSummary response for AAPU: {}
+2025-10-10 11:30:20,692 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:20] "GET /stock/AAPL.NE HTTP/1.1" 200 -
+2025-10-10 11:30:20,695 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:20] "GET /stock/AAPB HTTP/1.1" 200 -
+2025-10-10 11:30:20,699 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:20] "GET /stock/AAPU HTTP/1.1" 200 -
+2025-10-10 11:30:21,613 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:21] "GET /stock/AAPL260116C00250000 HTTP/1.1" 200 -
+2025-10-10 11:30:22,572 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:22] "GET /chart-data/AAPL260116C00250000 HTTP/1.1" 200 -
+2025-10-10 11:30:23,018 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:23] "GET /stock/AAPL HTTP/1.1" 200 -
+2025-10-10 11:30:23,917 - werkzeug - INFO - 127.0.0.1 - - [10/Oct/2025 11:30:23] "GET /chart-data/AAPL HTTP/1.1" 200 -
