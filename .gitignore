@@ -1,2 +1,8 @@
+<<<<<<< HEAD
 
 /.zencoder
+=======
+/.env
+/.zencoder
+.env
+>>>>>>> be5227009785a7f363a95cfed2676541667644a1
