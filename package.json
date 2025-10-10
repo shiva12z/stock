@@ -1,11 +1,12 @@
 {
-  "name": "stockwise-server",
+  "name": "stockwise",
   "version": "1.0.0",
-  "description": "Backend server for StockWise application with Gemini API integration",
+  "description": "StockWise - Stock Price Prediction Application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
+    "dev": "cd client && npm run dev",
+    "build": "cd client && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -22,7 +23,8 @@
     "finance",
     "gemini",
     "ai",
-    "express"
+    "express",
+    "react"
   ],
   "author": "StockWise Team",
   "license": "MIT"
